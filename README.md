@@ -7,19 +7,19 @@ A modern, production-ready **React + Vite** web application for GST New Registra
 ## 📸 Screenshots
 
 ### Contact Page
-![Contact Page](screenshots/contact.png)
+![Contact Page](screenshorts/contact.png)
 
 ### OTP Verification
-![OTP Verification](screenshots/otp.png)
+![OTP Verification](screenshorts/otp.png)
 
 ### Document Upload
-![Document Upload](screenshots/upload.png)
+![Document Upload](screenshorts/upload.png)
 
 ### Registration Form
-![Registration Form](screenshots/form.png)
+![Registration Form](screenshorts/form.png)
 
 ### Review & Submit
-![Review & Submit](screenshots/review.png)
+![Review & Submit](screenshorts/review.png)
 ---
 
 ## ✨ Features
