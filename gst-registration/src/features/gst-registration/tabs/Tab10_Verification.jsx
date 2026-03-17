@@ -3,6 +3,40 @@ import { FormInput, FormSelect, FormCheckbox, SectionCard, InfoAlert, Grid2 } fr
 export default function Tab10_Verification({ data, update, errors, touched, touch }) {
   const f = (name) => ({ value:data[name], error:touched[name]?errors[name]:null, onChange:(e)=>update(name,e.target.value), onBlur:()=>touch(name) });
 
+  // Compute dynamic list of signatories from previous sections
+  const signatoryItems = [];
+
+  // 1. Primary Authorized Signatory from Tab 3
+  if (data.as_name_first) {
+    const fullName = [data.as_name_first, data.as_name_middle, data.as_name_last].filter(Boolean).join(" ");
+    signatoryItems.push({
+      value: fullName,
+      label: `${fullName} [${data.as_pan || ''}]`.toUpperCase().trim()
+    });
+  }
+
+  // 2. Promoter 1 (if marked as also authorized signatory)
+  if (data["Also Authorized Signatory"] && data.name_first) {
+    const fullName = [data.name_first, data.name_middle, data.name_last].filter(Boolean).join(" ");
+    if (!signatoryItems.some(item => item.value === fullName)) {
+      signatoryItems.push({
+        value: fullName,
+        label: `${fullName} [${data.pan_proprietor || ''}]`.toUpperCase().trim()
+      });
+    }
+  }
+
+  // 3. Promoter 2 (if marked as also authorized signatory)
+  if (data["Also Authorized Signatory_2"] && data.name_first_2) {
+    const fullName = [data.name_first_2, data.name_middle_2, data.name_last_2].filter(Boolean).join(" ");
+    if (!signatoryItems.some(item => item.value === fullName)) {
+      signatoryItems.push({
+        value: fullName,
+        label: `${fullName} [${data.pan_proprietor_2 || ''}]`.toUpperCase().trim()
+      });
+    }
+  }
+
   return (
     <SectionCard title="Verification & Declaration" icon="✅">
       <FormCheckbox
@@ -17,15 +51,13 @@ export default function Tab10_Verification({ data, update, errors, touched, touc
           error={touched.signatory?errors.signatory:null}
           onChange={(e)=>update("signatory",e.target.value)}
           onBlur={()=>touch("signatory")}
-          items={[
-            {value:"object:2346",label:"RAVI VISHNUKUMAR SOMANI [DRMPS3554S]"},
-            {value:"object:2347",label:"Ravi Vishnukumar Somani [DRMPS3552R]"},
-          ]}
+          items={signatoryItems}
+          placeholder="Select signatory name"
         />
         <FormInput label="Place" required {...f("place")} placeholder="Enter place of signing"/>
-        {/* designation_ver — editable (was readOnly before, now fixed) */}
+        {/* designation_ver — editable */}
         <FormInput label="Designation / Status" {...f("designation_ver")} placeholder="e.g. Proprietor"/>
-        {/* date_ver — editable (was readOnly before, now fixed) */}
+        {/* date_ver — editable */}
         <FormInput label="Date" type="date" {...f("date_ver")}/>
       </Grid2>
       <InfoAlert type="warning">

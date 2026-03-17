@@ -1,15 +1,105 @@
+import { useEffect } from "react";
 import { FormInput, FormSelect, FormToggle, FormRadioGroup, SectionCard, InfoAlert, Grid2, Grid3 } from "../../../components/ui/index.jsx";
 import { FileInput } from "../../../components/ui/index.jsx";
 import { COUNTRIES } from "../../../constants/dropdowns.js";
 
+// Shared promoter form used for both Promoter 1 (suffix="") and Promoter 2 (suffix="_2")
 // Shared promoter form used for both Promoter 1 (suffix="") and Promoter 2 (suffix="_2")
 export default function Tab1_Promoter({ data, update, errors, touched, touch, suffix="" }) {
   const s = (n) => suffix ? `${n}${suffix}` : n;
   const f = (name) => ({ value:data[s(name)], error:touched[s(name)]?errors[s(name)]:null, onChange:(e)=>update(s(name),e.target.value), onBlur:()=>touch(s(name)) });
   const sel = (name) => ({ value:data[s(name)], error:touched[s(name)]?errors[s(name)]:null, onChange:(e)=>update(s(name),e.target.value), onBlur:()=>touch(s(name)) });
 
+  const isAlsoSignatoryField = s("Also Authorized Signatory");
+  const isAlsoSignatory = !!data[isAlsoSignatoryField];
+
+  // REAL-TIME SYNC: This effect ensures that as you type in Promoter fields, 
+  // the Authorized Signatory (Tab 3/Page 4) stays updated automatically.
+  useEffect(() => {
+    if (isAlsoSignatory) {
+      const mappings = {
+        as_name_first: data[s("name_first")],
+        as_name_middle: data[s("name_middle")],
+        as_name_last: data[s("name_last")],
+        as_father_first: data[s("father_first")],
+        as_father_middle: data[s("father_middle")],
+        as_father_last: data[s("father_last")],
+        as_dob: data[s("dob")],
+        as_mobile: data[s("mobile")],
+        as_email: data[s("email")],
+        as_telephone: data[s("telephone")],
+        radiogroup_1: data[s("radiogroup")],
+        as_designation: data[s("designation")],
+        as_din: data[s("din")],
+        as_pan: data[s("pan_proprietor")],
+        toggle_3: !!data[s("toggle_2")], 
+        as_passport: data[s("passport")],
+        as_aadhaar: data[s("aadhaar")],
+        as_country: data[s("country")],
+        as_pin: data[s("pin_code")],
+        as_state: data[s("state_res")],
+        as_district: data[s("district_res")],
+        as_city: data[s("city_res")],
+        as_locality: data[s("locality")],
+        as_road: data[s("road_street_res")],
+        as_premises: data[s("premises_name")],
+        as_bno: data[s("building_no_res")],
+        as_floor: data[s("floor_no_res")],
+        as_landmark: data[s("landmark_res")],
+        as_photo: data[s("photo")],
+        is_primary: true
+      };
+
+      Object.entries(mappings).forEach(([targetKey, newValue]) => {
+        // Only trigger update if the value is actually different to prevent unnecessary re-renders
+        if (data[targetKey] !== newValue) {
+          update(targetKey, newValue);
+        }
+      });
+    } else {
+      // If user toggles to "No", we check if we should clear the fields 
+      // (only if they currently match this promoter's data to avoid clearing unique data)
+      const currentFirstName = data[s("name_first")];
+      if (currentFirstName && data.as_name_first === currentFirstName) {
+        const clears = {
+          as_name_first: "", as_name_middle: "", as_name_last: "",
+          as_father_first: "", as_father_middle: "", as_father_last: "",
+          as_dob: "", as_mobile: "", as_email: "", as_telephone: null,
+          as_designation: "", as_din: "", as_pan: "", as_passport: null, as_aadhaar: null,
+          as_pin: "", as_state: null, as_district: null, as_city: null,
+          as_locality: null, as_road: null, as_premises: null,
+          as_bno: null, as_floor: null, as_landmark: null,
+          as_photo: null, is_primary: false
+        };
+        Object.entries(clears).forEach(([k, v]) => {
+          if (data[k] !== v) update(k, v);
+        });
+      }
+    }
+  }, [
+    isAlsoSignatory,
+    data[s("name_first")], data[s("name_middle")], data[s("name_last")],
+    data[s("father_first")], data[s("father_middle")], data[s("father_last")],
+    data[s("dob")], data[s("mobile")], data[s("email")], data[s("telephone")],
+    data[s("radiogroup")], data[s("designation")], data[s("din")], data[s("pan_proprietor")],
+    data[s("toggle_2")], data[s("passport")], data[s("aadhaar")], data[s("country")],
+    data[s("pin_code")], data[s("state_res")], data[s("district_res")], data[s("city_res")],
+    data[s("locality")], data[s("road_street_res")], data[s("premises_name")],
+    data[s("building_no_res")], data[s("floor_no_res")], data[s("landmark_res")],
+    data[s("photo")], update
+  ]);
+
   return (
     <>
+      {isAlsoSignatory && (
+        <div style={{ background:"#F0FDF4", border:"1px solid #BBF7D0", borderRadius:12, padding:"12px 18px", marginBottom:20, display:"flex", alignItems:"center", gap:10 }}>
+          <div style={{ width:24, height:24, borderRadius:"50%", background:"#10B981", color:"#fff", display:"flex", alignItems:"center", justifyContent:"center", fontSize:14 }}>✓</div>
+          <span style={{ fontSize:13, fontWeight:600, color:"#065F46" }}>
+            <strong>Auto-Sync Enabled:</strong> This promoter's details are being synced to the Authorized Signatory section in real-time.
+          </span>
+        </div>
+      )}
+
       <SectionCard title="Personal Information" icon="👤">
         <Grid3>
           <FormInput label="First Name" required {...f("name_first")} placeholder="First name"/>
@@ -64,7 +154,7 @@ export default function Tab1_Promoter({ data, update, errors, touched, touch, su
 
       <SectionCard title="Document Upload" icon="📎">
         <FileInput label="Upload Photo (JPEG only, max 100KB)" value={data[s("photo")]} onChange={(v)=>update(s("photo"),v)}/>
-        <FormToggle label="Also Authorized Signatory" value={!!data[s("Also Authorized Signatory")]} onChange={(v)=>update(s("Also Authorized Signatory"),v)}/>
+        <FormToggle label="Also Authorized Signatory" value={isAlsoSignatory} onChange={(v)=>update(isAlsoSignatoryField, v)}/>
       </SectionCard>
     </>
   );

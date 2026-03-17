@@ -49,7 +49,7 @@ export function useGSTForm() {
   const computeErrors = useCallback((data) => {
     const errs = {};
     Object.keys(data).forEach((k) => {
-      const err = validateField(k, data[k]);
+      const err = validateField(k, data[k], data);
       if (err) errs[k] = err;
     });
     return errs;
@@ -65,9 +65,12 @@ export function useGSTForm() {
   );
 
   const update = useCallback((name, value) => {
-    setFormData((prev) => ({ ...prev, [name]: value }));
-    const err = validateField(name, value);
-    setErrors((prev) => ({ ...prev, [name]: err }));
+    setFormData((prev) => {
+      const next = { ...prev, [name]: value };
+      const err = validateField(name, value, next);
+      setErrors((errs) => ({ ...errs, [name]: err }));
+      return next;
+    });
   }, []);
 
   const touch = useCallback(
@@ -75,7 +78,7 @@ export function useGSTForm() {
       setTouched((prev) => ({ ...prev, [name]: true }));
       setErrors((prev) => ({
         ...prev,
-        [name]: validateField(name, formData[name]),
+        [name]: validateField(name, formData[name], formData),
       }));
     },
     [formData]
