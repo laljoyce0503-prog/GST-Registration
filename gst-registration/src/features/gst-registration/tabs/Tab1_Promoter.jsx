@@ -39,47 +39,52 @@ export default function Tab1_Promoter({ data, update, errors, touched, touch, su
 
   // REAL-TIME SYNC: This effect ensures that as you type in Promoter fields, 
   // the Authorized Signatory (Tab 3/Page 4) stays updated automatically.
+  // It also clears the fields if the toggle is turned off.
+  // CRITICAL: This ONLY runs for Promoter 1 (suffix === ""). 
+  // Promoter 2 (suffix === "_2") does not sync to Page 4.
   useEffect(() => {
-    if (isAlsoSignatory) {
-      const mappings = {
-        as_name_first: data[s("name_first")],
-        as_name_middle: data[s("name_middle")],
-        as_name_last: data[s("name_last")],
-        as_father_first: data[s("father_first")],
-        as_father_middle: data[s("father_middle")],
-        as_father_last: data[s("father_last")],
-        as_dob: data[s("dob")],
-        as_mobile: data[s("mobile")],
-        as_email: data[s("email")],
-        as_telephone: data[s("telephone")],
-        radiogroup_1: data[s("radiogroup")],
-        as_designation: data[s("designation")],
-        as_din: data[s("din")],
-        as_pan: data[s("pan_proprietor")],
-        toggle_3: !!data[s("toggle_2")], 
-        as_passport: data[s("passport")],
-        as_aadhaar: data[s("aadhaar")],
-        as_country: data[s("country")],
-        as_pin: data[s("pin_code")],
-        as_state: data[s("state_res")],
-        as_district: data[s("district_res")],
-        as_city: data[s("city_res")],
-        as_locality: data[s("locality")],
-        as_road: data[s("road_street_res")],
-        as_premises: data[s("premises_name")],
-        as_bno: data[s("building_no_res")],
-        as_floor: data[s("floor_no_res")],
-        as_landmark: data[s("landmark_res")],
-        as_photo: data[s("photo")],
-        is_primary: true
-      };
+    if (suffix !== "") return; // Only sync for Promoter 1
 
-      Object.entries(mappings).forEach(([targetKey, newValue]) => {
-        if (data[targetKey] !== newValue) update(targetKey, newValue);
-      });
-    }
+    const mappings = {
+      as_name_first: isAlsoSignatory ? data[s("name_first")] : "",
+      as_name_middle: isAlsoSignatory ? data[s("name_middle")] : "",
+      as_name_last: isAlsoSignatory ? data[s("name_last")] : "",
+      as_father_first: isAlsoSignatory ? data[s("father_first")] : "",
+      as_father_middle: isAlsoSignatory ? data[s("father_middle")] : "",
+      as_father_last: isAlsoSignatory ? data[s("father_last")] : "",
+      as_dob: isAlsoSignatory ? data[s("dob")] : "",
+      as_mobile: isAlsoSignatory ? data[s("mobile")] : "",
+      as_email: isAlsoSignatory ? data[s("email")] : "",
+      as_telephone: isAlsoSignatory ? data[s("telephone")] : "",
+      radiogroup_1: isAlsoSignatory ? data[s("radiogroup")] : null,
+      as_designation: isAlsoSignatory ? data[s("designation")] : "",
+      as_din: isAlsoSignatory ? data[s("din")] : "",
+      as_pan: isAlsoSignatory ? data[s("pan_proprietor")] : "",
+      toggle_3: isAlsoSignatory ? !!data[s("toggle_2")] : false, 
+      as_passport: isAlsoSignatory ? data[s("passport")] : null,
+      as_aadhaar: isAlsoSignatory ? data[s("aadhaar")] : null,
+      as_country: isAlsoSignatory ? data[s("country")] : "IN",
+      as_pin: isAlsoSignatory ? data[s("pin_code")] : "",
+      as_state: isAlsoSignatory ? data[s("state_res")] : "",
+      as_district: isAlsoSignatory ? data[s("district_res")] : "",
+      as_city: isAlsoSignatory ? data[s("city_res")] : "",
+      as_locality: isAlsoSignatory ? data[s("locality")] : "",
+      as_road: isAlsoSignatory ? data[s("road_street_res")] : "",
+      as_premises: isAlsoSignatory ? data[s("premises_name")] : "",
+      as_bno: isAlsoSignatory ? data[s("building_no_res")] : "",
+      as_floor: isAlsoSignatory ? data[s("floor_no_res")] : "",
+      as_landmark: isAlsoSignatory ? data[s("landmark_res")] : "",
+      as_photo: isAlsoSignatory ? data[s("photo")] : null,
+      is_primary: isAlsoSignatory ? true : false
+    };
+
+    Object.entries(mappings).forEach(([targetKey, newValue]) => {
+      if (data[targetKey] !== newValue) {
+        update(targetKey, newValue);
+      }
+    });
   }, [
-    isAlsoSignatory,
+    isAlsoSignatory, suffix,
     data[s("name_first")], data[s("name_middle")], data[s("name_last")],
     data[s("father_first")], data[s("father_middle")], data[s("father_last")],
     data[s("dob")], data[s("mobile")], data[s("email")], data[s("telephone")],
@@ -88,6 +93,7 @@ export default function Tab1_Promoter({ data, update, errors, touched, touch, su
     data[s("pin_code")], data[s("state_res")], data[s("district_res")], data[s("city_res")],
     data[s("locality")], data[s("road_street_res")], data[s("premises_name")],
     data[s("building_no_res")], data[s("floor_no_res")], data[s("landmark_res")],
+    data[s("photo")]
   ]);
 
   return (
