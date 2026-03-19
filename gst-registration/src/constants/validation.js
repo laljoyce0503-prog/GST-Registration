@@ -7,10 +7,14 @@ export const PATTERNS = {
   din: /^\d{8}$/,
 };
 
-export const validateField = (name, value) => {
+export const validateField = (name, value, allData = {}) => {
   const v = value === null || value === undefined ? "" : String(value).trim();
   const required = (label) => (!v ? `${label} is required` : null);
   const pattern = (p, msg) => (v && !p.test(v) ? msg : null);
+
+  const isRepEnabled = !!allData.toggle_4;
+  const isGSTP = allData.radiogroup_2 === "GST Practitioner";
+  const isOther = allData.radiogroup_2 === "Other";
 
   const rules = {
     legal_name: () => required("Legal Name"),
@@ -61,10 +65,15 @@ export const validateField = (name, value) => {
     declaration: () => (value !== true ? "You must accept the declaration to submit" : null),
     signatory: () => required("Authorized Signatory"),
     place: () => required("Place"),
-    rep_mobile: () => v && pattern(PATTERNS.mobile, "Mobile must be 10 digits starting with 6-9"),
-    rep_email: () => v && pattern(PATTERNS.email, "Invalid email address"),
-    rep_pan: () => v && pattern(PATTERNS.pan, "PAN must be in format: ABCDE1234F"),
-    as_aadhaar: () => v && pattern(PATTERNS.aadhaar, "Aadhaar must be 12 digits"),
+    // Authorized Rep fields - conditional
+    radiogroup_2: () => (isRepEnabled ? required("Type of Representative") : null),
+    enrolment_id: () => (isRepEnabled && isGSTP ? required("Enrolment ID") : null),
+    rep_name_first: () => (isRepEnabled && isOther ? required("First Name") : null),
+    rep_name_last: () => (isRepEnabled && isOther ? required("Last Name") : null),
+    rep_mobile: () => (v ? pattern(PATTERNS.mobile, "Mobile must be 10 digits starting with 6-9") : (isRepEnabled && isOther ? required("Mobile") : null)),
+    rep_email: () => (v ? pattern(PATTERNS.email, "Invalid email address") : (isRepEnabled && isOther ? required("Email") : null)),
+    rep_pan: () => (v ? pattern(PATTERNS.pan, "PAN must be in format: ABCDE1234F") : (isRepEnabled && isOther ? required("PAN") : null)),
+    rep_aadhaar: () => v && pattern(PATTERNS.aadhaar, "Aadhaar must be 12 digits"),
     aadhaar: () => v && pattern(PATTERNS.aadhaar, "Aadhaar must be 12 digits"),
     din: () => v && pattern(PATTERNS.din, "DIN must be 8 digits"),
     as_din: () => v && pattern(PATTERNS.din, "DIN must be 8 digits"),
@@ -76,9 +85,9 @@ export const validateField = (name, value) => {
 export const TAB_REQUIRED_FIELDS = {
   0: ["legal_name","pan","pan_date","Constitution of Business","trade_name","state","District","reason","commencement_date","commencement_date_1"],
   1: ["name_first","name_last","dob","mobile","email","designation","pan_proprietor","country","pin_code","state_res","district_res","city_res","road_street_res","building_no_res"],
-  2: ["name_first_2","name_last_2","dob_2","mobile_2","email_2"],
+  2: [],
   3: ["as_name_first","as_name_last","as_dob","as_mobile","as_email","as_designation","as_pan","as_pin"],
-  4: [],
+  4: ["radiogroup_2", "enrolment_id", "rep_name_first","rep_name_last","rep_mobile","rep_email","rep_pan"],
   5: ["ppb_pin","ppb_state","ppb_premises","ppb_bno","sector_circle","center_commissionerate","center_division","center_range","ppb_possession_type","ppb_proof_doc"],
   6: [],
   7: [],

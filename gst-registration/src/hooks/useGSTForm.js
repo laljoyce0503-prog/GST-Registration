@@ -49,7 +49,7 @@ export function useGSTForm() {
   const computeErrors = useCallback((data) => {
     const errs = {};
     Object.keys(data).forEach((k) => {
-      const err = validateField(k, data[k]);
+      const err = validateField(k, data[k], data);
       if (err) errs[k] = err;
     });
     return errs;
@@ -65,9 +65,12 @@ export function useGSTForm() {
   );
 
   const update = useCallback((name, value) => {
-    setFormData((prev) => ({ ...prev, [name]: value }));
-    const err = validateField(name, value);
-    setErrors((prev) => ({ ...prev, [name]: err }));
+    setFormData((prev) => {
+      const next = { ...prev, [name]: value };
+      const err = validateField(name, value, next);
+      setErrors((errs) => ({ ...errs, [name]: err }));
+      return next;
+    });
   }, []);
 
   const touch = useCallback(
@@ -75,7 +78,7 @@ export function useGSTForm() {
       setTouched((prev) => ({ ...prev, [name]: true }));
       setErrors((prev) => ({
         ...prev,
-        [name]: validateField(name, formData[name]),
+        [name]: validateField(name, formData[name], formData),
       }));
     },
     [formData]
@@ -85,6 +88,25 @@ export function useGSTForm() {
     if (autoFilled && Object.keys(autoFilled).length > 0) {
       setFormData((prev) => ({ ...prev, ...autoFilled }));
     }
+  }, []);
+
+  const fetchAddressByPin = useCallback(async (pin) => {
+    if (!pin || pin.length !== 6) return null;
+    try {
+      const resp = await fetch(`https://api.postalpincode.in/pincode/${pin}`);
+      const result = await resp.json();
+      if (result?.[0]?.Status === "Success" && result[0].PostOffice?.[0]) {
+        const po = result[0].PostOffice[0];
+        return {
+          stateName: po.State,
+          district: po.District,
+          city: po.Block || po.Name,
+        };
+      }
+    } catch (err) {
+      console.warn("[fetchAddressByPin] Failed:", err.message);
+    }
+    return null;
   }, []);
 
   const touchAllInTab = useCallback(
@@ -107,23 +129,31 @@ export function useGSTForm() {
   );
 
   const handleSaveContinue = useCallback(
-    (activeTab, totalTabs) => {
-      const errCount = touchAllInTab(activeTab);
+    (activeTabIdx, totalTabs) => {
+      // Clear apb_notice error if it exists
+      if (errors.apb_notice) {
+        setErrors(prev => {
+          const { apb_notice, ...rest } = prev;
+          return rest;
+        });
+      }
+
+      const errCount = touchAllInTab(activeTabIdx);
       if (errCount > 0) {
         setShowTabWarning(true);
         setTimeout(() => setShowTabWarning(false), 3000);
         return false;
       }
-      setTabStatus((prev) => ({ ...prev, [activeTab]: "complete" }));
-      if (activeTab < totalTabs - 1) {
-        setActiveTab(activeTab + 1);
+      setTabStatus((prev) => ({ ...prev, [activeTabIdx]: "complete" }));
+      if (activeTabIdx < totalTabs - 1) {
+        setActiveTab(activeTabIdx + 1);
       } else {
         navigate("/review");
       }
       window.scrollTo({ top: 0, behavior: "smooth" });
       return true;
     },
-    [touchAllInTab, navigate]
+    [touchAllInTab, navigate, formData.toggle_5, errors.apb_notice]
   );
 
   const handleSubmit = useCallback(async () => {
@@ -196,5 +226,6 @@ export function useGSTForm() {
     resetForm,
     getTabErrors,
     computeErrors,
+    fetchAddressByPin,
   };
 }
